@@ -1,70 +1,29 @@
-import { Text, VStack, HStack } from '@expo/ui/swift-ui';
-import { font, foregroundStyle, padding } from '@expo/ui/swift-ui/modifiers';
-import { createLiveActivity } from 'expo-widgets';
+// Dynamic Island Widget for iOS
+// This requires expo-widgets package and iOS 16.1+
+// For now, this is a placeholder - the game works without it
 
-const GameActivity = (props, environment) => {
-  'widget';
+let widgetAvailable = false;
 
-  const accentColor = '#FFFFFF';
+try {
+  // Try to load expo-widgets if available
+  const ExpoWidgets = require('expo-widgets');
+  widgetAvailable = true;
+} catch (e) {
+  // Widget not available - that's fine, game still works
+  widgetAvailable = false;
+}
 
-  return {
-    banner: (
-      <VStack modifiers={[padding({ all: 10 })]}>
-        <Text modifiers={[font({ weight: 'bold', size: 16 }), foregroundStyle(accentColor)]}>
-          SPACE SHOOTER
-        </Text>
-        <Text modifiers={[font({ size: 24 }), foregroundStyle(accentColor)]}>
-          Score: {props.score}
-        </Text>
-      </VStack>
-    ),
-    compactLeading: (
-      <Text modifiers={[font({ weight: 'bold' }), foregroundStyle(accentColor)]}>
-        {props.score}
-      </Text>
-    ),
-    compactTrailing: (
-      <Text modifiers={[foregroundStyle(accentColor)]}>
-        Lives: {props.lives}
-      </Text>
-    ),
-    minimal: (
-      <Text modifiers={[font({ weight: 'bold' }), foregroundStyle(accentColor)]}>
-        {props.score}
-      </Text>
-    ),
-    expandedLeading: (
-      <VStack modifiers={[padding({ all: 12 })]}>
-        <Text modifiers={[font({ weight: 'bold', size: 20 }), foregroundStyle(accentColor)]}>
-          SPACE SHOOTER
-        </Text>
-      </VStack>
-    ),
-    expandedCenter: (
-      <VStack modifiers={[padding({ all: 12 })]}>
-        <Text modifiers={[font({ size: 32 }), foregroundStyle(accentColor)]}>
-          Score: {props.score}
-        </Text>
-      </VStack>
-    ),
-    expandedTrailing: (
-      <VStack modifiers={[padding({ all: 12 })]}>
-        <Text modifiers={[font({ size: 16 }), foregroundStyle(accentColor)]}>
-          Lives: {props.lives}
-        </Text>
-        <Text modifiers={[font({ size: 16 }), foregroundStyle(accentColor)]}>
-          High: {props.highScore}
-        </Text>
-      </VStack>
-    ),
-    expandedBottom: (
-      <HStack modifiers={[padding({ all: 12 })]}>
-        <Text modifiers={[foregroundStyle(accentColor)]}>
-          {props.isPlaying ? 'Playing...' : 'Tap to start'}
-        </Text>
-      </HStack>
-    ),
-  };
+const GameWidget = {
+  update: (data) => {
+    if (!widgetAvailable) {
+      // Widget not available, just log the data
+      console.log('Widget update (not available):', data);
+      return;
+    }
+    // If widget is available, update it
+    // Implementation depends on expo-widgets API
+  },
+  isAvailable: () => widgetAvailable,
 };
 
-export default createLiveActivity('GameActivity', GameActivity);
+export default GameWidget;
