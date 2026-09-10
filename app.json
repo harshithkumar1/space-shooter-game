@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Space Shooter",
+    "slug": "space-shooter-game",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.spacegame.shooter",
+      "infoPlist": {
+        "NSMotionUsageDescription": "This app uses gyroscope to control your spaceship"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#000000",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "package": "com.spacegame.shooter",
+      "permissions": ["android.permission.HIGH_SAMPLING_RATE_SENSORS"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sensors",
+      [
+        "expo-av",
+        {
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}
