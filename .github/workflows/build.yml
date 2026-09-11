@@ -67,21 +67,45 @@ jobs:
         working-directory: ios
         run: pod install
 
+      - name: List iOS workspace contents
+        run: |
+          echo "=== iOS directory ==="
+          ls -la ios/
+          echo "=== xcworkspace ==="
+          find ios -name "*.xcworkspace" -type d
+          echo "=== xcodeproj ==="
+          find ios -name "*.xcodeproj" -type d
+          echo "=== scheme names ==="
+          xcodebuild -list -workspace ios/*.xcworkspace 2>/dev/null || echo "No workspace found"
+
       - name: Build iOS App
         working-directory: ios
         run: |
-          xcodebuild -workspace *.xcworkspace \
-            -scheme $(basename *.xcodeproj .xcodeproj) \
+          SCHEME=$(basename *.xcodeproj .xcodeproj)
+          echo "Building scheme: $SCHEME"
+          xcodebuild \
+            -workspace *.xcworkspace \
+            -scheme "$SCHEME" \
             -configuration Release \
             -sdk iphoneos \
-            -archivePath build/app.xcarchive \
-            CODE_SIGNING_ALLOWED=NO
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
 
       - name: Create IPA
         run: |
+          echo "=== Looking for .app files ==="
+          find . -name "*.app" -type d
+          APP_PATH=$(find . -name "*.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app file found!"
+            exit 1
+          fi
+          echo "Found app: $APP_PATH"
           mkdir -p Payload
-          cp -r ios/build/app.xcarchive/Products/Applications/*.app Payload/
+          cp -r "$APP_PATH" Payload/
           zip -r space-shooter.ipa Payload
+          echo "IPA created successfully"
 
       - name: Upload iOS IPA
         uses: actions/upload-artifact@v4
@@ -104,6 +128,6 @@ jobs:
           echo "| iOS IPA | ${{ needs.build-ios.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### How to Download" >> $GITHUB_STEP_SUMMARY
-          echo "1. Click on the 'Build Android APK' or 'Build iOS IPA' job above" >> $GITHUB_STEP_SUMMARY
-          echo "2. Scroll down to 'Artifacts' section" >> $GITHUB_STEP_SUMMARY
+          echo "1. Click on the completed build job above" >> $GITHUB_STEP_SUMMARY
+          echo "2. Scroll down to **Artifacts** section" >> $GITHUB_STEP_SUMMARY
           echo "3. Click on the file to download" >> $GITHUB_STEP_SUMMARY
