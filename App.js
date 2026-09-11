@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, TouchableOpacity, StyleSheet, Dimensions, Platform } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
 
 import Ship from './src/entities/Ship';
 import Enemy from './src/entities/Enemy';
@@ -15,7 +15,9 @@ import ScoreDisplay from './src/ui/ScoreDisplay';
 import LivesDisplay from './src/ui/LivesDisplay';
 import GameOver from './src/ui/GameOver';
 import StartScreen from './src/ui/StartScreen';
-import { GAME_STATE, INITIAL_LIVES, GAME, SHIP } from './src/constants';
+import { GAME_STATE, INITIAL_LIVES, GAME } from './src/constants';
+
+const { width, height } = Dimensions.get('window');
 
 export default function App() {
   const [gameState, setGameState] = useState(GAME_STATE.START);
@@ -25,6 +27,7 @@ export default function App() {
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(INITIAL_LIVES);
   const [highScore, setHighScore] = useState(0);
+  const [isBoosting, setIsBoosting] = useState(false);
 
   const gameLoopRef = useRef(null);
   const lastTimeRef = useRef(0);
@@ -32,11 +35,13 @@ export default function App() {
   const enemiesRef = useRef(enemies);
   const bulletsRef = useRef(bullets);
   const scoreRef = useRef(score);
+  const isBoostingRef = useRef(isBoosting);
 
   shipRef.current = ship;
   enemiesRef.current = enemies;
   bulletsRef.current = bullets;
   scoreRef.current = score;
+  isBoostingRef.current = isBoosting;
 
   useEffect(() => {
     return () => {
@@ -50,7 +55,7 @@ export default function App() {
   useEffect(() => {
     if (gameState === GAME_STATE.PLAYING) {
       startGyroscope((data) => {
-        const newShipPos = updateShipPosition(shipRef.current, data, 1);
+        const newShipPos = updateShipPosition(shipRef.current, data, 1, isBoostingRef.current);
         setShip(newShipPos);
       });
       lastTimeRef.current = Date.now();
@@ -134,6 +139,7 @@ export default function App() {
     setBullets([]);
     setScore(0);
     setLives(INITIAL_LIVES);
+    setIsBoosting(false);
   };
 
   if (gameState === GAME_STATE.START) {
@@ -151,12 +157,12 @@ export default function App() {
   }
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      activeOpacity={1}
-      onPress={handleShoot}
-    >
-      <View style={styles.gameArea}>
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.gameArea}
+        activeOpacity={1}
+        onPress={handleShoot}
+      >
         <ScoreDisplay score={score} />
         <LivesDisplay lives={lives} />
         <Ship x={ship.x} y={ship.y} />
@@ -166,8 +172,21 @@ export default function App() {
         {bullets.map((bullet) => (
           <Bullet key={bullet.id} x={bullet.x} y={bullet.y} />
         ))}
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.boosterButton,
+          isBoosting && styles.boosterButtonActive
+        ]}
+        activeOpacity={0.7}
+        onPressIn={() => setIsBoosting(true)}
+        onPressOut={() => setIsBoosting(false)}
+      >
+        <Text style={styles.boosterText}>▲</Text>
+        <Text style={styles.boosterLabel}>BOOST</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -179,5 +198,31 @@ const styles = StyleSheet.create({
   gameArea: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  boosterButton: {
+    position: 'absolute',
+    bottom: 40,
+    right: 20,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#333333',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  boosterButtonActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  boosterText: {
+    color: '#000000',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  boosterLabel: {
+    color: '#000000',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });

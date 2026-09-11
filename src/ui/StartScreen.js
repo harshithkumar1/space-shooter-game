@@ -7,8 +7,10 @@ const StartScreen = ({ onStart }) => {
       <Text style={styles.title}>SPACE</Text>
       <Text style={styles.subtitle}>SHOOTER</Text>
       <View style={styles.instructions}>
-        <Text style={styles.instructionText}>TILT to move</Text>
-        <Text style={styles.instructionText}>TAP to shoot</Text>
+        <Text style={styles.instructionText}>TILT to move left/right</Text>
+        <Text style={styles.instructionText}>TAP anywhere to shoot</Text>
+        <Text style={styles.instructionText}>Hold BOOST to go up</Text>
+        <Text style={styles.instructionText}>Release BOOST to fall down</Text>
       </View>
       <TouchableOpacity style={styles.button} onPress={onStart}>
         <Text style={styles.buttonText}>START GAME</Text>
@@ -40,10 +42,10 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   instructionText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#888888',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   button: {
     paddingHorizontal: 40,

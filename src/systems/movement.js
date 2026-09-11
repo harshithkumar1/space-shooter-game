@@ -1,12 +1,21 @@
 import { GAME, SHIP } from '../constants';
 
-export const updateShipPosition = (ship, gyroscopeData, deltaTime) => {
+export const updateShipPosition = (ship, gyroscopeData, deltaTime, isBoosting) => {
   const sensitivity = 3;
+  const boostSpeed = 6;
+  const gravity = 2;
+
   let newX = ship.x + gyroscopeData.y * sensitivity * deltaTime;
-  let newY = ship.y - gyroscopeData.x * sensitivity * deltaTime;
+
+  let newY;
+  if (isBoosting) {
+    newY = ship.y - boostSpeed * deltaTime;
+  } else {
+    newY = ship.y + gravity * deltaTime;
+  }
 
   newX = Math.max(0, Math.min(newX, SHIP.maxX));
-  newY = Math.min(SHIP.maxY, Math.max(newY, SHIP.minY));
+  newY = Math.max(SHIP.minY, Math.min(newY, SHIP.maxY));
 
   return { x: newX, y: newY };
 };
