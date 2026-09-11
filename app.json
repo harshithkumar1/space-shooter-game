@@ -16,7 +16,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#000000",
-        "foregroundImage": "./assets/adaptive-icon.png"
+        "foregroundImage": "./assets/icon.png"
       },
       "package": "com.spacegame.shooter",
       "permissions": ["android.permission.HIGH_SAMPLING_RATE_SENSORS"]

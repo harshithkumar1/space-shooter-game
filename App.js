@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, TouchableOpacity, StyleSheet, Dimensions, Platform } from 'react-native';
-import { GestureHandlerRootView, Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import Ship from './src/entities/Ship';
 import Enemy from './src/entities/Enemy';
@@ -11,22 +10,12 @@ import { updateShipPosition, updateBulletPosition, updateEnemyPosition } from '.
 import { canShoot, createBullet, isBulletOffScreen } from './src/systems/shooting';
 import { checkBulletEnemyCollision, checkShipEnemyCollision, isEnemyOffScreen } from './src/systems/collision';
 import { canSpawnEnemy, createEnemy } from './src/systems/spawner';
-// Sounds disabled for Expo Go - will be enabled in development build
 
 import ScoreDisplay from './src/ui/ScoreDisplay';
 import LivesDisplay from './src/ui/LivesDisplay';
 import GameOver from './src/ui/GameOver';
 import StartScreen from './src/ui/StartScreen';
 import { GAME_STATE, INITIAL_LIVES, GAME, SHIP } from './src/constants';
-
-let GameWidget = null;
-if (Platform.OS === 'ios') {
-  try {
-    GameWidget = require('./src/widgets/GameWidget').default;
-  } catch (e) {
-    console.log('Widget not available');
-  }
-}
 
 export default function App() {
   const [gameState, setGameState] = useState(GAME_STATE.START);
@@ -42,10 +31,12 @@ export default function App() {
   const shipRef = useRef(ship);
   const enemiesRef = useRef(enemies);
   const bulletsRef = useRef(bullets);
+  const scoreRef = useRef(score);
 
   shipRef.current = ship;
   enemiesRef.current = enemies;
   bulletsRef.current = bullets;
+  scoreRef.current = score;
 
   useEffect(() => {
     return () => {
@@ -63,16 +54,17 @@ export default function App() {
         setShip(newShipPos);
       });
       lastTimeRef.current = Date.now();
-      gameLoop();
+      runGameLoop();
     } else {
       stopGyroscope();
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
+        gameLoopRef.current = null;
       }
     }
   }, [gameState]);
 
-  const gameLoop = () => {
+  const runGameLoop = () => {
     const currentTime = Date.now();
     const deltaTime = (currentTime - lastTimeRef.current) / 16;
     lastTimeRef.current = currentTime;
@@ -96,7 +88,7 @@ export default function App() {
 
     checkCollisions();
 
-    gameLoopRef.current = requestAnimationFrame(gameLoop);
+    gameLoopRef.current = requestAnimationFrame(runGameLoop);
   };
 
   const checkCollisions = () => {
@@ -115,7 +107,7 @@ export default function App() {
         setLives((prev) => {
           const newLives = prev - 1;
           if (newLives <= 0) {
-            setHighScore((prevHigh) => Math.max(prevHigh, score));
+            setHighScore((prevHigh) => Math.max(prevHigh, scoreRef.current));
             setGameState(GAME_STATE.GAME_OVER);
           }
           return newLives;
@@ -125,19 +117,15 @@ export default function App() {
     });
   };
 
-  const handleTap = (event) => {
+  const handleShoot = useCallback(() => {
     if (gameState !== GAME_STATE.PLAYING) return;
 
     const currentTime = Date.now();
     if (canShoot(currentTime)) {
-      const newBullet = createBullet(ship.x, ship.y);
+      const newBullet = createBullet(shipRef.current.x, shipRef.current.y);
       setBullets((prev) => [...prev, newBullet]);
-
-      if (Platform.OS === 'ios' && GameWidget) {
-        GameWidget.update({ score, lives, highScore, isPlaying: true });
-      }
     }
-  };
+  }, [gameState]);
 
   const startGame = () => {
     setGameState(GAME_STATE.PLAYING);
@@ -147,10 +135,6 @@ export default function App() {
     setScore(0);
     setLives(INITIAL_LIVES);
   };
-
-  const tapGesture = Gesture.Tap().onEnd(() => {
-    handleTap();
-  });
 
   if (gameState === GAME_STATE.START) {
     return <StartScreen onStart={startGame} />;
@@ -167,21 +151,23 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <GestureDetector gesture={tapGesture}>
-        <View style={styles.gameArea}>
-          <ScoreDisplay score={score} />
-          <LivesDisplay lives={lives} />
-          <Ship x={ship.x} y={ship.y} />
-          {enemies.map((enemy) => (
-            <Enemy key={enemy.id} x={enemy.x} y={enemy.y} />
-          ))}
-          {bullets.map((bullet) => (
-            <Bullet key={bullet.id} x={bullet.x} y={bullet.y} />
-          ))}
-        </View>
-      </GestureDetector>
-    </GestureHandlerRootView>
+    <TouchableOpacity
+      style={styles.container}
+      activeOpacity={1}
+      onPress={handleShoot}
+    >
+      <View style={styles.gameArea}>
+        <ScoreDisplay score={score} />
+        <LivesDisplay lives={lives} />
+        <Ship x={ship.x} y={ship.y} />
+        {enemies.map((enemy) => (
+          <Enemy key={enemy.id} x={enemy.x} y={enemy.y} />
+        ))}
+        {bullets.map((bullet) => (
+          <Bullet key={bullet.id} x={bullet.x} y={bullet.y} />
+        ))}
+      </View>
+    </TouchableOpacity>
   );
 }
 
