@@ -11,7 +11,7 @@ import { updateShipPosition, updateBulletPosition, updateEnemyPosition } from '.
 import { canShoot, createBullet, isBulletOffScreen } from './src/systems/shooting';
 import { checkBulletEnemyCollision, checkShipEnemyCollision, isEnemyOffScreen } from './src/systems/collision';
 import { canSpawnEnemy, createEnemy } from './src/systems/spawner';
-import { loadSounds, playLaserSound, playExplosionSound, unloadSounds } from './src/utils/sounds';
+// Sounds disabled for Expo Go - will be enabled in development build
 
 import ScoreDisplay from './src/ui/ScoreDisplay';
 import LivesDisplay from './src/ui/LivesDisplay';
@@ -48,9 +48,7 @@ export default function App() {
   bulletsRef.current = bullets;
 
   useEffect(() => {
-    loadSounds();
     return () => {
-      unloadSounds();
       stopGyroscope();
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
@@ -105,7 +103,6 @@ export default function App() {
     bulletsRef.current.forEach((bullet) => {
       enemiesRef.current.forEach((enemy) => {
         if (checkBulletEnemyCollision(bullet, enemy)) {
-          playExplosionSound();
           setScore((prev) => prev + 10);
           setEnemies((prev) => prev.filter((e) => e.id !== enemy.id));
           setBullets((prev) => prev.filter((b) => b.id !== bullet.id));
@@ -133,7 +130,6 @@ export default function App() {
 
     const currentTime = Date.now();
     if (canShoot(currentTime)) {
-      playLaserSound();
       const newBullet = createBullet(ship.x, ship.y);
       setBullets((prev) => [...prev, newBullet]);
 

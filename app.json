@@ -25,13 +25,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-sensors",
-      [
-        "expo-av",
-        {
-          "microphonePermission": false
-        }
-      ]
+      "expo-sensors"
     ],
     "extra": {
       "eas": {
