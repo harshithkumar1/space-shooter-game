@@ -19,21 +19,34 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Setup EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Generate native Android code
+        run: npx expo prebuild --platform android --clean
 
       - name: Build Android APK
-        run: eas build --platform android --profile preview --non-interactive --no-wait
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android/app/build/outputs/apk/release/*.apk
 
   build-ios:
     name: Build iOS IPA
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,14 +60,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Setup EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Generate native iOS code
+        run: npx expo prebuild --platform ios --clean
 
-      - name: Build iOS IPA
-        run: eas build --platform ios --profile preview --non-interactive --no-wait
+      - name: Install CocoaPods
+        working-directory: ios
+        run: pod install
+
+      - name: Build iOS App
+        working-directory: ios
+        run: |
+          xcodebuild -workspace *.xcworkspace \
+            -scheme $(basename *.xcodeproj .xcodeproj) \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/app.xcarchive \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Create IPA
+        run: |
+          mkdir -p Payload
+          cp -r ios/build/app.xcarchive/Products/Applications/*.app Payload/
+          zip -r space-shooter.ipa Payload
+
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: space-shooter.ipa
 
   summary:
     name: Build Summary
@@ -67,7 +100,10 @@ jobs:
           echo "## Build Status" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Android | ${{ needs.build-android.result == 'success' && '✅' || '⏳' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| iOS | ${{ needs.build-ios.result == 'success' && '✅' || '⏳' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Android APK | ${{ needs.build-android.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS IPA | ${{ needs.build-ios.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Check the [Expo dashboard](https://expo.dev) for build status and download links." >> $GITHUB_STEP_SUMMARY
+          echo "### How to Download" >> $GITHUB_STEP_SUMMARY
+          echo "1. Click on the 'Build Android APK' or 'Build iOS IPA' job above" >> $GITHUB_STEP_SUMMARY
+          echo "2. Scroll down to 'Artifacts' section" >> $GITHUB_STEP_SUMMARY
+          echo "3. Click on the file to download" >> $GITHUB_STEP_SUMMARY
