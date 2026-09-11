@@ -2,8 +2,8 @@ import { GAME, SHIP } from '../constants';
 
 export const updateShipPosition = (ship, gyroscopeData, deltaTime) => {
   const sensitivity = 3;
-  let newX = ship.x + gyroscopeData.x * sensitivity * deltaTime;
-  let newY = ship.y - gyroscopeData.y * sensitivity * deltaTime;
+  let newX = ship.x + gyroscopeData.y * sensitivity * deltaTime;
+  let newY = ship.y - gyroscopeData.x * sensitivity * deltaTime;
 
   newX = Math.max(0, Math.min(newX, SHIP.maxX));
   newY = Math.min(SHIP.maxY, Math.max(newY, SHIP.minY));
